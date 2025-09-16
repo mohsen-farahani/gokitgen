@@ -1,0 +1,105 @@
+package transports
+
+import (
+	"context"
+	"testing"
+
+	"github.com/go-kit/kit/endpoint"
+	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	"{{$.ModulePath}}/internal/api/endpoints"
+)
+
+type mockEndpoint struct {
+	response interface{}
+	err      error
+}
+
+func (m *mockEndpoint) Endpoint() endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		return m.response, m.err
+	}
+}
+
+func TestCreate{{$.ModelName}}(t *testing.T) {
+	mockCreate := &mockEndpoint{
+		response: &Create{{$.ModelName}}Response{Id: 123},
+		err:      nil,
+	}
+
+	server := &grpcServer{
+		endpoints: endpoints.{{$.ModelName}}Endpoints{
+			CreateEndpoint: mockCreate.Endpoint(),
+		},
+	}
+
+	req := &Create{{$.ModelName}}Request{}
+	resp, err := server.Create{{$.ModelName}}(context.Background(), req)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int64(123), resp.Id)
+}
+
+func TestCreate{{$.ModelName}}_Error(t *testing.T) {
+	mockCreate := &mockEndpoint{
+		response: nil,
+		err:      status.Error(codes.Internal, "database error"),
+	}
+
+	server := &grpcServer{
+		endpoints: endpoints.{{$.ModelName}}Endpoints{
+			CreateEndpoint: mockCreate.Endpoint(),
+		},
+	}
+
+	req := &Create{{$.ModelName}}Request{}
+	resp, err := server.Create{{$.ModelName}}(context.Background(), req)
+
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+	assert.Equal(t, codes.Internal, status.Code(err))
+}
+
+func TestGet{{$.ModelName}}(t *testing.T) {
+	mockGet := &mockEndpoint{
+		response: &Get{{$.ModelName}}Response{
+			{{lower $.ModelName}}: &{{$.ModelName}}{Id: 456},
+		},
+		err: nil,
+	}
+
+	server := &grpcServer{
+		endpoints: endpoints.{{$.ModelName}}Endpoints{
+			GetEndpoint: mockGet.Endpoint(),
+		},
+	}
+
+	req := &Get{{$.ModelName}}Request{Id: 456}
+	resp, err := server.Get{{$.ModelName}}(context.Background(), req)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, resp.{{lower $.ModelName}})
+	assert.Equal(t, int64(456), resp.{{lower $.ModelName}}.Id)
+}
+
+func TestGet{{$.ModelName}}_Error(t *testing.T) {
+	mockGet := &mockEndpoint{
+		response: nil,
+		err:      status.Error(codes.NotFound, "not found"),
+	}
+
+	server := &grpcServer{
+		endpoints: endpoints.{{$.ModelName}}Endpoints{
+			GetEndpoint: mockGet.Endpoint(),
+		},
+	}
+
+	req := &Get{{$.ModelName}}Request{Id: 999}
+	resp, err := server.Get{{$.ModelName}}(context.Background(), req)
+
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+	assert.Equal(t, codes.NotFound, status.Code(err))
+}

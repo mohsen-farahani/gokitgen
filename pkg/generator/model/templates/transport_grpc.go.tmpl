@@ -1,0 +1,40 @@
+package transports
+
+import (
+	"context"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	"{{$.ModulePath}}/internal/api/endpoints"
+	"{{$.ModulePath}}/internal/models"
+)
+
+type grpcServer struct {
+	endpoints endpoints.{{$.ModelName}}Endpoints
+}
+
+func NewGRPCServer(eps endpoints.{{$.ModelName}}Endpoints) *grpcServer {
+	return &grpcServer{endpoints: eps}
+}
+
+func (s *grpcServer) Create{{$.ModelName}}(ctx context.Context, req *Create{{$.ModelName}}Request) (*Create{{$.ModelName}}Response, error) {
+	resp, err := s.endpoints.CreateEndpoint(ctx, req)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return resp.(*Create{{$.ModelName}}Response), nil
+}
+
+func (s *grpcServer) Get{{$.ModelName}}(ctx context.Context, req *Get{{$.ModelName}}Request) (*Get{{$.ModelName}}Response, error) {
+	resp, err := s.endpoints.GetEndpoint(ctx, req)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return resp.(*Get{{$.ModelName}}Response), nil
+}
+
+func RegisterGRPCServer(grpcServer *grpc.Server, handler *grpcServer) {
+	Register{{$.ModelName}}ServiceServer(grpcServer, handler)
+}

@@ -1,0 +1,18 @@
+package repositories
+
+import (
+	"{{$.ModulePath}}/internal/models"
+	"gitsource/pkg/database/mysql/dbmanager"
+)
+
+type {{$.ModelName}}Repository struct {
+	CommonBehaviorRepository[models.{{$.ModelName}}]
+	*dbmanager.DBManager
+}
+
+func New{{$.ModelName}}Repository(dbManager *dbmanager.DBManager) {{$.ModelName}}Repository {
+	return {{$.ModelName}}Repository{
+		DBManager:                dbManager,
+		CommonBehaviorRepository: NewCommonBehavior[models.{{$.ModelName}}](dbManager),
+	}
+}

@@ -1,0 +1,29 @@
+package service
+
+import (
+	"context"
+	"{{$.ModulePath}}/internal/service/dto"
+)
+
+type {{$.ModelName}}Service interface {
+	Create(ctx context.Context, req *dto.{{$.ModelName}}) (int64, error)
+	GetByID(ctx context.Context, id int64) (*dto.{{$.ModelName}}, error)
+}
+
+type {{$.ModelName}}ServiceImpl struct {
+	// TODO: Add repository
+}
+
+func New{{$.ModelName}}Service() *{{$.ModelName}}ServiceImpl {
+	return &{{$.ModelName}}ServiceImpl{}
+}
+
+func (s *{{$.ModelName}}ServiceImpl) Create(ctx context.Context, req *dto.{{$.ModelName}}) (int64, error) {
+	// TODO: Implement
+	return 1, nil
+}
+
+func (s *{{$.ModelName}}ServiceImpl) GetByID(ctx context.Context, id int64) (*dto.{{$.ModelName}}, error) {
+	// TODO: Implement
+	return &dto.{{$.ModelName}}{}, nil
+}

@@ -1,0 +1,58 @@
+package endpoints
+
+import (
+	"context"
+	"github.com/go-kit/kit/endpoint"
+	"{{$.ModulePath}}/internal/service"
+)
+
+type {{$.ModelName}}Endpoints struct {
+	CreateEndpoint endpoint.Endpoint
+	GetEndpoint    endpoint.Endpoint
+}
+
+func Make{{$.ModelName}}Endpoints(s service.{{$.ModelName}}Service) {{$.ModelName}}Endpoints {
+	return {{$.ModelName}}Endpoints{
+		CreateEndpoint: makeCreateEndpoint(s),
+		GetEndpoint:    makeGetEndpoint(s),
+	}
+}
+
+type Create{{$.ModelName}}Request struct {
+	// TODO: complete
+}
+
+type Create{{$.ModelName}}Response struct {
+	ID    int64  `json:"id"`
+	Error string `json:"error,omitempty"`
+}
+
+func makeCreateEndpoint(s service.{{$.ModelName}}Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(Create{{$.ModelName}}Request)
+		id, err := s.Create(ctx, req.User)
+		if err != nil {
+			return Create{{$.ModelName}}Response{0, err.Error()}, nil
+		}
+		return Create{{$.ModelName}}Response{id, ""}, nil
+	}
+}
+
+type Get{{$.ModelName}}Request struct {
+	ID int64 `json:"id"`
+}
+
+type Get{{$.ModelName}}Response struct {
+	// TODO: complete
+}
+
+func makeGetEndpoint(s service.{{$.ModelName}}Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(Get{{$.ModelName}}Request)
+		user, err := s.GetByID(ctx, req.ID)
+		if err != nil {
+			return Get{{$.ModelName}}Response{nil, err.Error()}, nil
+		}
+		return Get{{$.ModelName}}Response{user, ""}, nil
+	}
+}

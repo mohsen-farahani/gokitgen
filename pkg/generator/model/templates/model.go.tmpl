@@ -1,0 +1,28 @@
+package models
+
+import "gorm.io/gorm"
+
+{{range .Enums}}
+{{$enum := .}}
+type {{toPascal .Name}} string
+
+const (
+{{range .Values}}	{{toPascal $enum.Name}}{{toPascal .}} {{toPascal $enum.Name}} = "{{.}}"
+{{end}})
+{{end}}
+
+const {{toPascal $.ModelName}}TableName = "{{lower $.ModelName}}s"
+
+{{range $i, $field := $.Fields}}
+const Column{{toPascal $.ModelName}}{{toPascal $field.Name}} = "{{lower $field.Name}}"
+{{end}}
+
+type {{$.ModelName}} struct {
+	gorm.Model
+{{range .Fields}}	{{.Name}} {{if .TypeIsEnum}}{{toPascal .Type}}{{else if .TypeIsRelation}}uint{{else}}{{.Type}}{{end}} {{if .TypeIsRelation}}`gorm:"index"`{{end}} {{if .Comment}}// {{.Comment}}{{end}}
+{{if .TypeIsRelation}}	{{.Type}} {{.Type}} `gorm:"foreignKey:{{.Name}}ID"`{{end}}
+{{end}}}
+
+func (m {{$.ModelName}}) Table() string {
+	return {{toPascal $.ModelName}}TableName
+}

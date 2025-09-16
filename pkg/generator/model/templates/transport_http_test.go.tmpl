@@ -1,0 +1,130 @@
+package transports
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/go-kit/kit/endpoint"
+	"github.com/stretchr/testify/assert"
+	"github.com/gorilla/mux"
+)
+
+type mockEndpoint struct {
+	response interface{}
+	err      error
+}
+
+func (m *mockEndpoint) Endpoint() endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		return m.response, m.err
+	}
+}
+
+func TestMakeCreate{{$.ModelName}}Handler_Success(t *testing.T) {
+	mockCreate := &mockEndpoint{
+		response: &Create{{$.ModelName}}Response{Id: 123},
+		err:      nil,
+	}
+
+	handler := MakeCreate{{$.ModelName}}Handler(mockCreate.Endpoint())
+
+	body := `{"status": "PENDING", "amount": 100}`
+	req := httptest.NewRequest("POST", "/{{lower $.ModelName}}s", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	var resp Create{{$.ModelName}}Response
+	err := json.Unmarshal(rr.Body.Bytes(), &resp)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(123), resp.Id)
+	assert.Empty(t, resp.Error)
+}
+
+func TestMakeCreate{{$.ModelName}}Handler_Error(t *testing.T) {
+	mockCreate := &mockEndpoint{
+		response: nil,
+		err:      &ServiceError{Message: "database error"},
+	}
+
+	handler := MakeCreate{{$.ModelName}}Handler(mockCreate.Endpoint())
+
+	body := `{"status": "PENDING", "amount": 100}`
+	req := httptest.NewRequest("POST", "/{{lower $.ModelName}}s", bytes.NewBufferString(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	var resp Create{{$.ModelName}}Response
+	err := json.Unmarshal(rr.Body.Bytes(), &resp)
+	assert.NoError(t, err)
+	assert.Equal(t, "database error", resp.Error)
+	assert.Zero(t, resp.Id)
+}
+
+func TestMakeGet{{$.ModelName}}Handler_Success(t *testing.T) {
+	mockGet := &mockEndpoint{
+		response: &Get{{$.ModelName}}Response{
+			{{lower $.ModelName}}: &{{$.ModelName}}{Id: 456, Status: "PENDING", Amount: 100},
+		},
+		err: nil,
+	}
+
+	handler := MakeGet{{$.ModelName}}Handler(mockGet.Endpoint())
+
+	req := httptest.NewRequest("GET", "/{{lower $.ModelName}}s/456", nil)
+	rr := httptest.NewRecorder()
+
+	rctx := mux.SetURLVars(req, map[string]string{"id": "456"})
+	handler.ServeHTTP(rr, rctx)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	var resp Get{{$.ModelName}}Response
+	err := json.Unmarshal(rr.Body.Bytes(), &resp)
+	assert.NoError(t, err)
+	assert.NotNil(t, resp.{{lower $.ModelName}})
+	assert.Equal(t, int64(456), resp.{{lower $.ModelName}}.Id)
+	assert.Empty(t, resp.Error)
+}
+
+func TestMakeGet{{$.ModelName}}Handler_Error(t *testing.T) {
+	mockGet := &mockEndpoint{
+		response: nil,
+		err:      &ServiceError{Message: "not found"},
+	}
+
+	handler := MakeGet{{$.ModelName}}Handler(mockGet.Endpoint())
+
+	req := httptest.NewRequest("GET", "/{{lower $.ModelName}}s/999", nil)
+	rr := httptest.NewRecorder()
+
+	rctx := mux.SetURLVars(req, map[string]string{"id": "999"})
+	handler.ServeHTTP(rr, rctx)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+
+	var resp Get{{$.ModelName}}Response
+	err := json.Unmarshal(rr.Body.Bytes(), &resp)
+	assert.NoError(t, err)
+	assert.Nil(t, resp.{{lower $.ModelName}})
+	assert.Equal(t, "not found", resp.Error)
+}
+
+type ServiceError struct {
+	Message string
+}
+
+func (e *ServiceError) Error() string {
+	return e.Message
+}

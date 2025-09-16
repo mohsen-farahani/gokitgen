@@ -1,0 +1,14 @@
+package type
+
+{{range .Enums}}
+{{$enum := .}}
+type {{toPascal .Name}} string 
+
+const (
+{{range .Values}}	{{toPascal $enum.Name}}{{toPascal .}} {{toPascal $enum.Name}} = "{{.}}"
+{{end}})
+{{end}}
+
+type {{$.ModelName}} struct {
+{{range .Fields}}	{{.Name}} {{if .IsNullable}}*{{end}}{{.Type}} `json:"{{lower .Name}}"{{if .Validation}} validate:"{{join .Validation ","}}"{{end}}`
+{{end}}}

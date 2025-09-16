@@ -1,0 +1,17 @@
+package api
+
+import (
+	"github.com/gorilla/mux"
+	"net/http"
+	"{{$.ModulePath}}/internal/api/endpoints"
+	"{{$.ModulePath}}/internal/api/transports"
+)
+
+func RegisterRoutes(r *mux.Router, eps endpoints.{{$.ModelName}}Endpoints) {
+	// HTTP Transports
+	createHandler := transports.MakeCreate{{$.ModelName}}Handler(eps.CreateEndpoint)
+	getHandler := transports.MakeGet{{$.ModelName}}Handler(eps.GetEndpoint)
+
+	r.Handle("/{{lower $.ModelName}}", createHandler).Methods("POST")
+	r.Handle("/{{lower $.ModelName}}/{id}", getHandler).Methods("GET")
+}

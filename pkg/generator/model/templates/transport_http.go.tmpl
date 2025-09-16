@@ -1,0 +1,43 @@
+package transports
+
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"{{$.ModulePath}}/internal/api/endpoints"
+	"github.com/go-kit/kit/transport/http"
+)
+
+func MakeCreate{{$.ModelName}}Handler(e endpoint.Endpoint) http.Handler {
+	return http.NewServer(
+		e,
+		decodeCreate{{$.ModelName}}Request,
+		encodeResponse,
+	)
+}
+
+func MakeGet{{$.ModelName}}Handler(e endpoint.Endpoint) http.Handler {
+	return http.NewServer(
+		e,
+		decodeGet{{$.ModelName}}Request,
+		encodeResponse,
+	)
+}
+
+func decodeCreate{{$.ModelName}}Request(_ context.Context, r *http.Request) (interface{}, error) {
+	var req endpoints.Create{{$.ModelName}}Request
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, err
+	}
+	return req, nil
+}
+
+func decodeGet{{$.ModelName}}Request(_ context.Context, r *http.Request) (interface{}, error) {
+	// TODO: parse path param
+	return endpoints.Get{{$.ModelName}}Request{ID: 1}, nil
+}
+
+func encodeResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	return json.NewEncoder(w).Encode(response)
+}

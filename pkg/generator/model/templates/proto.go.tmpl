@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package api.{{lower $.ModelName}}.v1;
+
+option go_package = "{{$.OutputPath}}/api/proto/v1;v1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+
+{{range .Enums}}
+enum {{.Name}} {
+  {{.Name}}_UNSPECIFIED = 0;
+{{range $i, $value := .Values}}  {{$.Name}}_{{$value}} = {{addIndex $i 1}};
+{{end}}}
+{{end}}
+
+message {{$.ModelName}} {
+  int64 id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  google.protobuf.Timestamp updated_at = 3;
+{{range $index, $field := .Fields}}  {{if $field.TypeIsEnum}}{{$field.Type}} {{lower $field.Name}} = {{addIndex $index 4}};{{else if $field.TypeIsRelation}}uint32 {{lower $field.Name}}_id = {{addIndex $index 4}}; // Ref: {{$field.Type}}{{else}}{{protobufType $field.Type}} {{lower $field.Name}} = {{addIndex $index 4}};{{end}}
+{{end}}}
+
+message Create{{$.ModelName}}Request {
+{{range $index, $field := .Fields}}  {{if $field.TypeIsEnum}}{{$field.Type}} {{lower $field.Name}} = {{addIndex $index 1}};{{else if $field.TypeIsRelation}}uint32 {{lower $field.Name}}_id = {{addIndex $index 1}};{{else}}{{protobufType $field.Type}} {{lower $field.Name}} = {{addIndex $index 1}};{{end}}
+{{end}}}
+
+message Create{{$.ModelName}}Response {
+  int64 id = 1;
+  string error = 2;
+}
+
+message Get{{$.ModelName}}Request {
+  int64 id = 1;
+}
+
+message Get{{$.ModelName}}Response {
+  {{$.ModelName}} {{lower $.ModelName}} = 1;
+  string error = 2;
+}
+
+service {{$.ModelName}}Service {
+  rpc Create{{$.ModelName}} (Create{{$.ModelName}}Request) returns (Create{{$.ModelName}}Response) {
+    option (google.api.http) = {
+      post: "/v1/{{lower $.ModelName}}s"
+      body: "*"
+    };
+  }
+
+  rpc Get{{$.ModelName}} (Get{{$.ModelName}}Request) returns (Get{{$.ModelName}}Response) {
+    option (google.api.http) = {
+      get: "/v1/{{lower $.ModelName}}s/{id}"
+    };
+  }
+}
